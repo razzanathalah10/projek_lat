@@ -4,16 +4,14 @@ from sqlalchemy import create_engine
 display =pd.options.display.max_rows = 99999
 # Konfigurasi Server
 engine = create_engine(
-    "mssql+pyodbc://@localhost/wc2026?driver=ODBC+Driver+18+for+SQL+Server&trusted_connection=yes"
+    "mssql+pyodbc://@localhost/wc2026?driver=ODBC+Driver+18+for+SQL+Server&trusted_connection=yes&TrustServerCertificate=yes"
 )
 # extracttt
 
 def extract(raw_data):
     try:
         data = pd.read_csv(raw_data)
-        # #print(data.shape)
-        print(data.isnull().sum())
-        # print(data.info())
+        print(data.shape)
         return data
     except Exception as e:
         print(f"Error extracting data: {e}")
@@ -54,21 +52,29 @@ def transformation(df):
             
         ]
 
+            df["primary_position"] = df["position"].str.split(",").str[0]
+
             df[int_cols] = df[int_cols].astype("Int64")
+            
             return df
     except Exception as e:
             print(f"Error transforming data: {e}")
             return None
 
-
+#load
 def loads(df):
     try:
         if df is None:
             print("No data to load.")
-            return None
+            
         else:
             df.to_sql(name="stat_pemain", con=engine, if_exists="replace", index=False)
+            print("Data loaded successfully.")
+            
+
     except Exception as e:
         print(f"Error loading data: {e}")
 
-extract("C:\\Users\\razzan\\Downloads\\players.csv")
+df = extract("C:\\Users\\razzan\\Downloads\\players.csv")
+df_last = transformation(df)
+loads(df_last)
